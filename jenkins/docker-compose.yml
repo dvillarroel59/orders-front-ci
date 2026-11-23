@@ -1,0 +1,25 @@
+name: pedidos-ci-jenkins-frontend
+
+services:
+  jenkins:
+    container_name: jenkins-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jenkins-frontend-docker-casc:local
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+      - "50001:50000"
+    env_file:
+      - ../.env
+    environment:
+      CASC_JENKINS_CONFIG: /var/jenkins_casc/jenkins.yaml
+      JAVA_OPTS: -Djenkins.install.runSetupWizard=false
+    volumes:
+      - jenkins_frontend_home:/var/jenkins_home
+      - ./jenkins.yaml:/var/jenkins_casc/jenkins.yaml:ro
+
+volumes:
+  jenkins_frontend_home:
+    name: jenkins_frontend_home

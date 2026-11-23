@@ -1,0 +1,59 @@
+jenkins:
+  systemMessage: Jenkins configurado como codigo con JCasC (frontend orders-front-ci)
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: admin
+          name: Admin
+          password: ${JENKINS_ADMIN_PASSWORD}
+  authorizationStrategy: loggedInUsersCanDoAnything
+
+unclassified:
+  location:
+    url: ${JENKINS_PUBLIC_URL:-http://localhost:8081/}
+
+tool:
+  nodejs:
+    installations:
+      - name: 'Node22'
+        properties:
+          - installSource:
+              installers:
+                - nodeJSInstaller:
+                    id: '22.11.0'
+
+jobs:
+  - script: |
+      def webhookMode = (System.getenv('USE_GITHUB_WEBHOOK') ?: 'false').toBoolean()
+
+      pipelineJob('integracion-continua-frontend-orders-front-ci') {
+        description('Pipeline de integracion continua para orders-front-ci (rama main)')
+        properties {
+          pipelineTriggers {
+            triggers {
+              if (webhookMode) {
+                githubPush()
+              } else {
+                pollSCM {
+                  scmpoll_spec('H/2 * * * *')
+                }
+              }
+            }
+          }
+        }
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/dvillarroel59/orders-front-ci')
+                }
+                branch('*/main')
+              }
+            }
+            scriptPath('Jenkinsfile')
+            lightweight()
+          }
+        }
+      }
